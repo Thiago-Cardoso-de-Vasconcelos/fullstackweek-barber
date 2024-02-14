@@ -11,7 +11,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/app/_components/ui/sheet';
-import { Loader2 } from "lucide-react"
+import { Loader2 } from 'lucide-react';
 import { Service } from '@prisma/client';
 import { setDate, setHours, setMinutes } from 'date-fns';
 import { format } from 'date-fns/format';
@@ -20,6 +20,8 @@ import { signIn, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useMemo, useState } from 'react';
 import { saveBooking } from '../_actions/save-booking';
+import { toast } from 'sonner';
+import { useRouter } from 'next/navigation';
 
 interface ServiceItemPops {
   barbershop: Barbershop;
@@ -27,11 +29,17 @@ interface ServiceItemPops {
   isAuthenticated: boolean;
 }
 
-const ServiceItem = ({ service, barbershop, isAuthenticated }: ServiceItemPops) => {
-  const {data} = useSession();
+const ServiceItem = ({
+  service,
+  barbershop,
+  isAuthenticated,
+}: ServiceItemPops) => {
+  const router = useRouter();
+  const { data } = useSession();
   const [date, setDate] = useState<Date | undefined>(undefined);
   const [hour, setHour] = useState<string | undefined>();
-  const [submitIsLoading, setSubmitIsLoading] =  useState(false);
+  const [submitIsLoading, setSubmitIsLoading] = useState(false);
+  const [sheetIsOpen, setSheetIsOpen] = useState(false);
 
   const handleDateClick = (date: Date | undefined) => {
     setDate(date);
@@ -50,9 +58,9 @@ const ServiceItem = ({ service, barbershop, isAuthenticated }: ServiceItemPops) 
 
   const handleBookingSubmit = async () => {
     setSubmitIsLoading(true);
-    try{
-      if(!hour || !date || !data?.user){
-        return
+    try {
+      if (!hour || !date || !data?.user) {
+        return;
       }
 
       const dateHour = Number(hour.split(':')[0]);
@@ -64,14 +72,26 @@ const ServiceItem = ({ service, barbershop, isAuthenticated }: ServiceItemPops) 
         serviceId: service.id,
         babershopId: barbershop.id,
         date: newDate,
-        userId: (data.user as any).id,         
+        userId: (data.user as any).id,
+      });
+
+      setSheetIsOpen(false);
+      setHour(undefined);
+      setDate(undefined);
+
+      toast("Reserva realizada com sucesso!", { 
+        description: format(newDate, "'Para' dd 'de' MMMM 'às' HH':'mm'.' ", {locale: ptBR,}),
+        action: {
+          label: "visualizar",
+          onClick: ()=> router.push("/bookings"),
+        }
       })
     } catch (error) {
-      console.error(error)
+      console.error(error);
     } finally {
       setSubmitIsLoading(false);
     }
-  }
+  };
 
   const timeList = useMemo(() => {
     return date ? generateDayTimeList(date) : [];
@@ -104,7 +124,7 @@ const ServiceItem = ({ service, barbershop, isAuthenticated }: ServiceItemPops) 
                   currency: 'BRL',
                 }).format(Number(service.price))}
               </p>
-              <Sheet>
+              <Sheet open={sheetIsOpen} onOpenChange={setSheetIsOpen}>
                 <SheetTrigger asChild>
                   <Button variant='secondary' onClick={handleBookingClick}>
                     Reservar
@@ -201,9 +221,15 @@ const ServiceItem = ({ service, barbershop, isAuthenticated }: ServiceItemPops) 
                     </Card>
                   </div>
                   <SheetFooter className='px-5'>
-                    <Button onClick={handleBookingSubmit} disabled={(!hour || !date) || submitIsLoading }>
-                       {submitIsLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                      Confirmar reserva</Button>
+                    <Button
+                      onClick={handleBookingSubmit}
+                      disabled={!hour || !date || submitIsLoading}
+                    >
+                      {submitIsLoading && (
+                        <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                      )}
+                      Confirmar reserva
+                    </Button>
                   </SheetFooter>
                 </SheetContent>
               </Sheet>

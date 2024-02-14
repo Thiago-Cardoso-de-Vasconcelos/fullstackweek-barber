@@ -3,6 +3,8 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import Footer from './_components/footer';
 import { NextAuthProvider } from "./_providers/auth";
+import { Toaster } from './_components/ui/sonner';
+
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
@@ -20,6 +22,7 @@ export default function RootLayout({
       <body className={`${inter.className} dark`}>
       <NextAuthProvider>
           {children}
+          <Toaster />
           <Footer />
           </NextAuthProvider>
       </body>
