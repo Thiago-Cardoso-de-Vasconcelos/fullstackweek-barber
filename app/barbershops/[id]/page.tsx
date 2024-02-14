@@ -1,6 +1,8 @@
 import { db } from '@/app/_lib/prisma';
 import BarbershopInfo from './_components/barbershop-info';
 import ServiceItem from './_components/service-item';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 
 interface BarbershopDetailsPagesProps {
   params: {
@@ -8,13 +10,10 @@ interface BarbershopDetailsPagesProps {
   };
 }
 
-const BarbershopDetailsPage = async ({
-  params,
-}: BarbershopDetailsPagesProps) => {
-  if (!params.id) {
-    // TODO: redirercionar para home page
-    return null;
-  }
+const BarbershopDetailsPage = async ({params}: BarbershopDetailsPagesProps) => {
+  const session = await getServerSession(authOptions); // EM SERVER COMPONENT TEM QUE USAR O getServerSession
+  
+  if(!params.id) { return null; }
 
   const barbershop = await db.barbershop.findUnique({
     where: {
@@ -25,10 +24,7 @@ const BarbershopDetailsPage = async ({
     },
   });
 
-  if (!barbershop) {
-    // TODO: redirercionar para home page
-    return null;
-  }
+  if(!barbershop) { return null; }
 
   return (
     <div>
@@ -36,7 +32,12 @@ const BarbershopDetailsPage = async ({
 
       <div className='p-5 flex flex-col gap-3'>
         {barbershop.services.map((service) => (
-          <ServiceItem key={service.id} service={service} />
+          <ServiceItem
+            key={service.id}
+            barbershop={barbershop}
+            service={service}
+            isAuthenticated={!!session?.user}
+          />
         ))}
       </div>
     </div>

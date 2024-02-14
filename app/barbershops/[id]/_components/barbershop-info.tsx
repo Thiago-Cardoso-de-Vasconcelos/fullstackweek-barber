@@ -9,13 +9,14 @@ import SideMenu from '@/app/_components/side-menu';
 
 interface BarbershopInfoProps {
   barbershop: Barbershop;
+  
 }
 
 const BarbershopInfo = ({ barbershop }: BarbershopInfoProps) => {
   const router = useRouter();
 
   const handleBackClick = () => {
-    router.back();
+    router.replace("/");
   };
 
   return (
