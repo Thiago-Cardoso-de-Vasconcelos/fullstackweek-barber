@@ -12,14 +12,15 @@ import {
   SheetTrigger,
 } from '@/app/_components/ui/sheet';
 import { Loader2 } from 'lucide-react';
-import { Service } from '@prisma/client';
+import { Barbershop, Booking, Service } from '@prisma/client';
 import { setDate, setHours, setMinutes } from 'date-fns';
 import { format } from 'date-fns/format';
 import { ptBR } from 'date-fns/locale';
 import { signIn, useSession } from 'next-auth/react';
 import Image from 'next/image';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { saveBooking } from '../_actions/save-booking';
+import { getDayBookings } from "../_actions/get-day-bookings";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
@@ -40,6 +41,20 @@ const ServiceItem = ({
   const [hour, setHour] = useState<string | undefined>();
   const [submitIsLoading, setSubmitIsLoading] = useState(false);
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
+  const [dayBookings, setDayBookings] = useState<Booking[]>([]);
+
+  useEffect(() => {
+    if (!date) {
+      return;
+    }
+
+    const refreshAvailableHours = async () => {
+      const _dayBookings = await getDayBookings(barbershop.id, date);
+      setDayBookings(_dayBookings);
+    };
+
+    refreshAvailableHours();
+  }, [date, barbershop.id]);
 
   const handleDateClick = (date: Date | undefined) => {
     setDate(date);
@@ -94,10 +109,29 @@ const ServiceItem = ({
   };
 
   const timeList = useMemo(() => {
-    return date ? generateDayTimeList(date) : [];
-  }, [date]);
+    if (!date) {
+      return [];
+    }
 
-  console.log({ timeList });
+    return generateDayTimeList(date).filter((time) => {
+      const timeHour = Number(time.split(":")[0]);
+      const timeMinutes = Number(time.split(":")[1]);
+
+      const booking = dayBookings.find((booking) => {
+        const bookingHour = booking.date.getHours();
+        const bookingMinutes = booking.date.getMinutes();
+
+        return bookingHour === timeHour && bookingMinutes === timeMinutes;
+      });
+
+      if (!booking) {
+        return true;
+      }
+
+      return false;
+    });
+  }, [date, dayBookings]);
+
 
   return (
     <Card>
