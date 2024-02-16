@@ -19,8 +19,8 @@ import { ptBR } from 'date-fns/locale';
 import { signIn, useSession } from 'next-auth/react';
 import Image from 'next/image';
 import { useEffect, useMemo, useState } from 'react';
-import { saveBooking } from '../_actions/save-booking';
-import { getDayBookings } from "../_actions/get-day-bookings";
+import { saveBooking } from '../../../_actions/save-booking';
+import { getDayBookings } from "../../../_actions/get-day-bookings";
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
 
